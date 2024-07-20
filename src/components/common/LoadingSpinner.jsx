@@ -1,6 +1,6 @@
 const LoadingSpinner = ({ size = "md" }) => {
-	const sizeClass = `loading-${size}`;
+  const sizeClass = `loading-${size}`;
 
-	return <span className={`loading loading-spinner ${sizeClass}`} />;
+  return <span className={`loading loading-spinner ${sizeClass}`} />;
 };
 export default LoadingSpinner;

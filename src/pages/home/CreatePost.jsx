@@ -2,6 +2,7 @@ import { CiImageOn } from "react-icons/ci";
 import { BsEmojiSmileFill } from "react-icons/bs";
 import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
+import { toast } from "react-toastify";
 
 const CreatePost = () => {
 	const [text, setText] = useState("");
@@ -17,7 +18,7 @@ const CreatePost = () => {
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		alert("Post Created Successfully");
+		toast.success("Post Created Successfully");
 	};
 
 	const handleImgChange = (e) => {
