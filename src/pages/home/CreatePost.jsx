@@ -11,7 +11,7 @@ const CreatePost = () => {
 
   const imgRef = useRef(null);
 
-  const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+  const { data: authUser } = useQuery({ queryKey: ['authUser'] });
   const queryClient = useQueryClient();
 
   const {
@@ -42,7 +42,7 @@ const CreatePost = () => {
       setText("");
       setImg(null);
       toast.success("Post Created Successfully");
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });
 
@@ -101,8 +101,8 @@ const CreatePost = () => {
             <BsEmojiSmileFill className="fill-primary w-5 h-5 cursor-pointer" />
           </div>
           <input
-            type="file"
-            accept="image/*"
+            type='file'
+            accept='image/*'
             hidden
             ref={imgRef}
             onChange={handleImgChange}
