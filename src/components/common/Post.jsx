@@ -21,8 +21,8 @@ const Post = ({ post }) => {
 
   const formattedDate = formatPostDate(post.createdAt);
 
-  const { mutate: deletePost, isPending:isDeleting } = useMutation({
-    mutationFn: async () => {	
+  const { mutate: deletePost, isPending: isDeleting } = useMutation({
+    mutationFn: async () => {
       try {
         const res = await fetch(`/api/posts/${post._id}`, {
           method: "DELETE",
@@ -42,72 +42,76 @@ const Post = ({ post }) => {
     },
   });
 
-  const {mutate:likePost,isPending:isLiking} = useMutation({
-    mutationFn: async () =>{
-      try{
-        const res=await fetch(`/api/posts/like/${post._id}`, {
-          method: 'POST',
+  const { mutate: likePost, isPending: isLiking } = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await fetch(`/api/posts/like/${post?._id}`, {
+          method: "POST",
         });
-        const data=await res.json();
-        if(!res.ok){
+        const data = await res.json();
+        if (!res.ok) {
           throw new Error(data.error || "Something went wrong");
         }
         return data;
-      }
-      catch(error){
+      } catch (error) {
         throw new Error(error);
       }
     },
 
-    onSuccess: (updatedLikes) =>{
-      //toast.success("Post Liked successfully");
-      //queryClient.invalidateQueries({queryKey:["posts"]});
+    onSuccess: (updatedLikes) => {
+      const initialLikesCount = post.likes.length;
+      const newLikesCount = updatedLikes.length;
 
-      queryClient.setQueryData(["posts"],(oldData) => {
-        return oldData.map(p => {
-          if(p._id === post._id) {
-            return {...p,likes:updatedLikes};
+     
+      if (newLikesCount > initialLikesCount) {
+        toast.success("Post Liked Successfully.!");
+      } else {
+        toast.success("Post Unliked Successfully.!");
+      }
+
+      queryClient.setQueryData(["posts"], (oldData) => {
+        return oldData.map((p) => {
+          if (p._id === post._id) {
+            return { ...p, likes: updatedLikes };
           }
           return p;
         });
       });
     },
 
-    onError: (error) =>{
-        toast.error(error.message);
+    onError: (error) => {
+      toast.error(error.message);
     },
-
   });
 
-  const {mutate:commentPost,isPending:isCommenting} = useMutation({
-      mutationFn: async () =>{
-        try{
-          const res = await fetch(`/api/posts/comment/${post._id}`,{
-            method: 'POST',
-            headers:{
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({text:comment}),
-          });
-          const data = await res.json();
+  const { mutate: commentPost, isPending: isCommenting } = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await fetch(`/api/posts/comment/${post._id}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text: comment }),
+        });
+        const data = await res.json();
 
-          if(!res.ok){
-            throw new Error(data.error || "Something went wrong");
-          }
-          return data;
+        if (!res.ok) {
+          throw new Error(data.error || "Something went wrong");
         }
-        catch(error){
-          throw new Error(error);
-        }
-      },
-      onSuccess: () =>{
-        toast.success("Comment Posted Successfully");
-        setComment("");
-        queryClient.invalidateQueries({queryKey: ["posts"]});
-      },
-      onError: (error) =>{
-        toast.error(error.message);
-      },
+        return data;
+      } catch (error) {
+        throw new Error(error);
+      }
+    },
+    onSuccess: () => {
+      toast.success("Comment Posted Successfully");
+      setComment("");
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
   });
 
   const handleDeletePost = () => {
@@ -121,7 +125,7 @@ const Post = ({ post }) => {
   };
 
   const handleLikePost = () => {
-    if(isLiking) return;
+    if (isLiking) return;
     likePost();
   };
 
@@ -234,7 +238,7 @@ const Post = ({ post }) => {
                       onChange={(e) => setComment(e.target.value)}
                     />
                     <button className="btn btn-primary rounded-full btn-sm text-white px-4">
-                      {isCommenting ? <LoadingSpinner size="md"/> : "post"}
+                      {isCommenting ? <LoadingSpinner size="md" /> : "post"}
                     </button>
                   </form>
                 </div>
@@ -250,9 +254,10 @@ const Post = ({ post }) => {
               </div>
               <div
                 className="flex gap-1 items-center group cursor-pointer"
-                onClick={handleLikePost}>
-                  {isLiking && <LoadingSpinner size="sm" />}
-                {!isLiked &&  !isLiking && (
+                onClick={handleLikePost}
+              >
+                {isLiking && <LoadingSpinner size="sm" />}
+                {!isLiked && !isLiking && (
                   <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-500" />
                 )}
                 {isLiked && !isLiking && (
