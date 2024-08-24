@@ -1,12 +1,16 @@
-import { FaRegComment } from "react-icons/fa";
+import {
+  FaRegComment,
+  FaRegHeart,
+  FaRegBookmark,
+  FaTrash,
+} from "react-icons/fa";
 import { BiRepost } from "react-icons/bi";
-import { FaRegHeart } from "react-icons/fa";
-import { FaRegBookmark } from "react-icons/fa6";
-import { FaTrash } from "react-icons/fa";
+import { FaWhatsapp, FaLinkedinIn, FaInstagram, FaLink } from "react-icons/fa"; // Import icons for sharing
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
+
 import LoadingSpinner from "./LoadingSpinner";
 import { formatPostDate } from "../../utils/date";
 
@@ -15,12 +19,13 @@ const Post = ({ post }) => {
   const { data: authUser } = useQuery({ queryKey: ["authUser"] });
   const queryClient = useQueryClient();
   const postOwner = post.user;
+  console.log("postowner", postOwner);
   const isLiked = post.likes.includes(authUser._id);
 
   const isMyPost = authUser._id === post.user._id;
 
   const formattedDate = formatPostDate(post.createdAt);
-
+  
   const { mutate: deletePost, isPending: isDeleting } = useMutation({
     mutationFn: async () => {
       try {
@@ -32,12 +37,13 @@ const Post = ({ post }) => {
         if (!res.ok) {
           throw new Error(data.error || "Something went wrong");
         }
+        return data;
       } catch (error) {
         throw new Error(error);
       }
     },
     onSuccess: () => {
-      toast.success("Post Deleted Successfully");
+      toast.success("Post deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
@@ -45,7 +51,7 @@ const Post = ({ post }) => {
   const { mutate: likePost, isPending: isLiking } = useMutation({
     mutationFn: async () => {
       try {
-        const res = await fetch(`/api/posts/like/${post?._id}`, {
+        const res = await fetch(`/api/posts/like/${post._id}`, {
           method: "POST",
         });
         const data = await res.json();
@@ -57,12 +63,10 @@ const Post = ({ post }) => {
         throw new Error(error);
       }
     },
-
     onSuccess: (updatedLikes) => {
       const initialLikesCount = post.likes.length;
       const newLikesCount = updatedLikes.length;
 
-     
       if (newLikesCount > initialLikesCount) {
         toast.success("Post Liked Successfully.!");
       } else {
@@ -78,7 +82,6 @@ const Post = ({ post }) => {
         });
       });
     },
-
     onError: (error) => {
       toast.error(error.message);
     },
@@ -105,7 +108,7 @@ const Post = ({ post }) => {
       }
     },
     onSuccess: () => {
-      toast.success("Comment Posted Successfully");
+      toast.success("Comment posted successfully");
       setComment("");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
@@ -129,6 +132,10 @@ const Post = ({ post }) => {
     likePost();
   };
 
+  const handleRepostClick = () => {
+    document.getElementById("repost_modal" + post._id).showModal();
+  };
+
   return (
     <>
       <div className="flex gap-2 items-start p-4 border-b border-gray-700">
@@ -137,8 +144,10 @@ const Post = ({ post }) => {
             to={`/profile/${postOwner.username}`}
             className="w-8 rounded-full overflow-hidden"
           >
-            <img src={postOwner?.profileImg || "/placeholder.png"} />
-            
+            <img
+              src={postOwner.profileImg || "/avatar-placeholder.png"}
+              alt="Profile"
+            />
           </Link>
         </div>
         <div className="flex flex-col flex-1">
@@ -161,6 +170,7 @@ const Post = ({ post }) => {
                     onClick={handleDeletePost}
                   />
                 )}
+
                 {isDeleting && <LoadingSpinner size="sm" />}
               </span>
             )}
@@ -171,7 +181,7 @@ const Post = ({ post }) => {
               <img
                 src={post.img}
                 className="h-80 object-contain rounded-lg border border-gray-700"
-                alt=""
+                alt="Post"
               />
             )}
           </div>
@@ -190,12 +200,21 @@ const Post = ({ post }) => {
                   {post.comments.length}
                 </span>
               </div>
-              {/* We're using Modal Component from DaisyUI */}
               <dialog
                 id={`comments_modal${post._id}`}
                 className="modal border-none outline-none"
               >
-                <div className="modal-box rounded border border-gray-600">
+                <div className="modal-box rounded border border-gray-600 relative">
+                  <button
+                    className="btn btn-sm btn-circle absolute right-2 top-2"
+                    onClick={() => {
+                      document
+                        .getElementById("comments_modal" + post._id)
+                        .close();
+                    }}
+                  >
+                    ✕
+                  </button>
                   <h3 className="font-bold text-lg mb-4">COMMENTS</h3>
                   <div className="flex flex-col gap-3 max-h-60 overflow-auto">
                     {post.comments.length === 0 && (
@@ -209,8 +228,10 @@ const Post = ({ post }) => {
                           <div className="w-8 rounded-full">
                             <img
                               src={
-                                comment.user.profileImg || "/placeholder.png"
+                                comment.user.profileImg ||
+                                "/avatar-placeholder.png"
                               }
+                              alt="Commenter"
                             />
                           </div>
                         </div>
@@ -239,7 +260,7 @@ const Post = ({ post }) => {
                       onChange={(e) => setComment(e.target.value)}
                     />
                     <button className="btn btn-primary rounded-full btn-sm text-white px-4">
-                      {isCommenting ? <LoadingSpinner size="md" /> : "post"}
+                      {isCommenting ? <LoadingSpinner size="md" /> : "Post"}
                     </button>
                   </form>
                 </div>
@@ -247,12 +268,86 @@ const Post = ({ post }) => {
                   <button className="outline-none">close</button>
                 </form>
               </dialog>
-              <div className="flex gap-1 items-center group cursor-pointer">
-                <BiRepost className="w-6 h-6  text-slate-500 group-hover:text-green-500" />
+              <div
+                className="flex gap-1 items-center group cursor-pointer"
+                onClick={handleRepostClick}
+              >
+                <BiRepost className="w-5 h-5  text-slate-500 group-hover:text-green-500" />
                 <span className="text-sm text-slate-500 group-hover:text-green-500">
                   0
                 </span>
               </div>
+              <dialog
+                id={`repost_modal${post._id}`}
+                className="modal border-none outline-none"
+              >
+                <div className="modal-box rounded border border-gray-600 relative">
+                  <button
+                    className="btn btn-sm btn-circle absolute right-2 top-2"
+                    onClick={() => {
+                      document
+                        .getElementById("repost_modal" + post._id)
+                        .close();
+                    }}
+                  >
+                    ✕
+                  </button>
+                  <h3 className="font-bold text-lg mb-4">Share Post</h3>
+                  <div className="flex flex-col gap-3">
+                    <button
+                      className="btn btn-primary w-full flex justify-center items-center gap-2"
+                      onClick={() => {
+                        window.open(
+                          `https://wa.me/?text=${encodeURIComponent(
+                            window.location.href
+                          )}`,
+                          "_blank"
+                        );
+                      }}
+                    >
+                      <FaWhatsapp className="w-5 h-5" />
+                    </button>
+                    <button
+                      className="btn btn-primary w-full flex justify-center items-center gap-2"
+                      onClick={() => {
+                        window.open(
+                          `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(
+                            window.location.href
+                          )}`,
+                          "_blank"
+                        );
+                      }}
+                    >
+                      <FaLinkedinIn className="w-5 h-5" />
+                    </button>
+                    <button
+                      className="btn btn-primary w-full flex justify-center items-center gap-2"
+                      onClick={() => {
+                        window.open(
+                          `https://www.instagram.com/?url=${encodeURIComponent(
+                            window.location.href
+                          )}`,
+                          "_blank"
+                        );
+                      }}
+                    >
+                      <FaInstagram className="w-5 h-5" />
+                    </button>
+                    <button
+                      className="btn btn-primary w-full flex justify-center items-center gap-2"
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.href);
+                        toast.success("Link copied to clipboard");
+                      }}
+                    >
+                      <FaLink className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+                <form method="dialog" className="modal-backdrop">
+                  <button className="outline-none">close</button>
+                </form>
+              </dialog>
               <div
                 className="flex gap-1 items-center group cursor-pointer"
                 onClick={handleLikePost}
